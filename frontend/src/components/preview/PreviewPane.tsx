@@ -3,7 +3,7 @@ import {
   FaUndo,
   FaDownload,
   FaDesktop,
-  FaMobile,
+  // FaMobile,
   FaCode,
 } from "react-icons/fa";
 import { AppState, Settings } from "../../types";
@@ -61,9 +61,9 @@ function PreviewPane({ doUpdate, reset, settings }: Props) {
               <TabsTrigger value="desktop" className="flex gap-x-2">
                 <FaDesktop /> Desktop
               </TabsTrigger>
-              <TabsTrigger value="mobile" className="flex gap-x-2">
+              {/* <TabsTrigger value="mobile" className="flex gap-x-2">
                 <FaMobile /> Mobile
-              </TabsTrigger>
+              </TabsTrigger> */}
               <TabsTrigger value="code" className="flex gap-x-2">
                 <FaCode />
                 Code
@@ -78,13 +78,13 @@ function PreviewPane({ doUpdate, reset, settings }: Props) {
             doUpdate={doUpdate}
           />
         </TabsContent>
-        <TabsContent value="mobile">
+        {/* <TabsContent value="mobile">
           <PreviewComponent
             code={previewCode}
             device="mobile"
             doUpdate={doUpdate}
           />
-        </TabsContent>
+        </TabsContent> */}
         <TabsContent value="code">
           <CodeTab 
             code={previewCode} 

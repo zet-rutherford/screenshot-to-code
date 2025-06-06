@@ -86,23 +86,23 @@ async def stream_gemini_response(
     if model_name == Llm.GEMINI_2_5_FLASH_PREVIEW_05_20.value:
         # Gemini 2.5 Flash supports thinking budgets
         extra_config = types.GenerateContentConfig(
-            temperature=0.1,
-            max_output_tokens=50000,
+            temperature=0.0,
+            max_output_tokens=20000,
             thinking_config=types.ThinkingConfig(
-                thinking_budget=8000,
+                thinking_budget=4000,
                 include_thoughts=True
             ),
         )
     elif model_name == Llm.GEMINI_2_5_PRO_PREVIEW_05_06.value:
         extra_config = types.GenerateContentConfig(
-            temperature=0.1,
-            max_output_tokens=50000,
+            temperature=0.0,
+            max_output_tokens=20000,
             thinking_config=types.ThinkingConfig(include_thoughts=True),
         )
     else:
         # TODO: Fix output tokens here
         extra_config = types.GenerateContentConfig(
-            temperature=0.1,
+            temperature=0.0,
             max_output_tokens=20000,
         )
 

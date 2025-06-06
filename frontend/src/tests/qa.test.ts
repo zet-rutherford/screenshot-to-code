@@ -165,7 +165,7 @@ class App {
       openAiApiKey: null,
       openAiBaseURL: null,
       screenshotOneApiKey: process.env.TEST_SCREENSHOTONE_API_KEY,
-      isImageGenerationEnabled: true,
+      isImageGenerationEnabled: false,
       editorTheme: "cobalt",
       generatedCodeConfig: this.stack,
       codeGenerationModel: this.model,

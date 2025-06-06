@@ -65,7 +65,7 @@ function App() {
       openAiBaseURL: null,
       anthropicApiKey: null,
       screenshotOneApiKey: null,
-      isImageGenerationEnabled: true,
+      isImageGenerationEnabled: false,
       editorTheme: EditorTheme.COBALT,
       generatedCodeConfig: Stack.HTML_TAILWIND,
       codeGenerationModel: CodeGenerationModel.CLAUDE_3_5_SONNET_2024_06_20,
@@ -313,36 +313,36 @@ function App() {
     }));
   };
 
-  function setStack(stack: Stack) {
-    setSettings((prev) => ({
-      ...prev,
-      generatedCodeConfig: stack,
-    }));
-  }
+  // function setStack(stack: Stack) {
+  //   setSettings((prev) => ({
+  //     ...prev,
+  //     generatedCodeConfig: stack,
+  //   }));
+  // }
 
-  function importFromCode(code: string, stack: Stack) {
-    // Reset any existing state
-    reset();
+  // function importFromCode(code: string, stack: Stack) {
+  //   // Reset any existing state
+  //   reset();
 
-    // Set input state
-    setIsImportedFromCode(true);
+  //   // Set input state
+  //   setIsImportedFromCode(true);
 
-    // Set up this project
-    setStack(stack);
+  //   // Set up this project
+  //   setStack(stack);
 
-    // Create a new commit and set it as the head
-    const commit = createCommit({
-      type: "code_create",
-      parentHash: null,
-      variants: [{ code }],
-      inputs: null,
-    });
-    addCommit(commit);
-    setHead(commit.hash);
+  //   // Create a new commit and set it as the head
+  //   const commit = createCommit({
+  //     type: "code_create",
+  //     parentHash: null,
+  //     variants: [{ code }],
+  //     inputs: null,
+  //   });
+  //   addCommit(commit);
+  //   setHead(commit.hash);
 
-    // Set the app state
-    setAppState(AppState.CODE_READY);
-  }
+  //   // Set the app state
+  //   setAppState(AppState.CODE_READY);
+  // }
 
   return (
     <div className="mt-2 dark:bg-black dark:text-white">
@@ -385,8 +385,8 @@ function App() {
         {appState === AppState.INITIAL && (
           <StartPane
             doCreate={doCreate}
-            importFromCode={importFromCode}
-            settings={settings}
+            // importFromCode={importFromCode}
+            // settings={settings}
           />
         )}
 

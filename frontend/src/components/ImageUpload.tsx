@@ -1,8 +1,8 @@
 import { useState, useEffect, useMemo } from "react";
 import { useDropzone } from "react-dropzone";
 import { toast } from "react-hot-toast";
-import { URLS } from "../urls";
-import ScreenRecorder from "./recording/ScreenRecorder";
+// import { URLS } from "../urls";
+// import ScreenRecorder from "./recording/ScreenRecorder";
 import { ScreenRecorderState } from "../types";
 
 const baseStyle = {
@@ -61,7 +61,10 @@ interface Props {
 function ImageUpload({ setReferenceImages }: Props) {
   const [files, setFiles] = useState<FileWithPreview[]>([]);
   // TODO: Switch to Zustand
-  const [screenRecorderState, setScreenRecorderState] =
+  const [
+    screenRecorderState,
+    // setScreenRecorderState
+  ] =
     useState<ScreenRecorderState>(ScreenRecorderState.INITIAL);
 
   const { getRootProps, getInputProps, isFocused, isDragAccept, isDragReject } =
@@ -74,9 +77,9 @@ function ImageUpload({ setReferenceImages }: Props) {
         "image/jpeg": [".jpeg"],
         "image/jpg": [".jpg"],
         // Video formats
-        "video/quicktime": [".mov"],
-        "video/mp4": [".mp4"],
-        "video/webm": [".webm"],
+        // "video/quicktime": [".mov"],
+        // "video/mp4": [".mp4"],
+        // "video/webm": [".webm"],
       },
       onDrop: (acceptedFiles) => {
         // Set up the preview thumbnail images
@@ -170,7 +173,7 @@ function ImageUpload({ setReferenceImages }: Props) {
           </p>
         </div>
       )}
-      {screenRecorderState === ScreenRecorderState.INITIAL && (
+      {/* {screenRecorderState === ScreenRecorderState.INITIAL && (
         <div className="text-center text-sm text-slate-800 mt-4">
           Upload a screen recording (.mp4, .mov) or record your screen to clone
           a whole app (experimental).{" "}
@@ -182,12 +185,12 @@ function ImageUpload({ setReferenceImages }: Props) {
             Learn more.
           </a>
         </div>
-      )}
-      <ScreenRecorder
+      )} */}
+      {/* <ScreenRecorder
         screenRecorderState={screenRecorderState}
         setScreenRecorderState={setScreenRecorderState}
         generateCode={setReferenceImages}
-      />
+      /> */}
     </section>
   );
 }
