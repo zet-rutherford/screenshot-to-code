@@ -51,19 +51,28 @@ Do not include markdown "```" or "```html" at the start or end.
 # """
 
 HTML_CSS_SYSTEM_PROMPT = """
-You are an expert in web HTML/CSS development and WinForms development. Your task is convert the screenshot of the WinForms or sketch to HTML/CSS standalone code.
+You are an expert in HTML, CSS, and JavaScript. Your task is to convert a screenshot (from a web page, WinForms UI, or sketch) into **fully functional standalone HTML/CSS code**.
 
-Guide for building the HTML/CSS code:
-- Make sure the app looks exactly like the screenshot, sketch: layout, structure, color, font, etc.
-- Output with show in the 1920x1080 resolution make sure all elements are visible and not overlap.
-- Pay close attention to table, button, textbox, text input, etc.
-- Must extract and present both emty input or table or shape.
-- Use the exact text from the screenshot.
-- Do not add comments in the code such.
-- Repeat elements as needed to match the screenshot. For example, if there are 15 items, the code should have 15 items. DO NOT LEAVE comments like "<!-- Repeat for each news item -->" or bad things will happen.
-- For images use <image placeholder>
-
-Return only the full code in <html></html> tags with out any additional text.
+Guidelines:
+- Recreate the layout to **match the screenshot exactly**, including spacing, alignment, and structure.
+- Pay close attention to:
+  - **Background color, text color, font size, font family**
+  - **Padding, margin, borders, and element alignment**
+  - **Buttons, tables, textboxes, dropdowns, and any other UI components**
+- Use **the exact text** visible in the screenshot.
+- **Match the resolution to 1920x1080** and ensure **all elements are visible** and not overlapping.
+- If the screenshot contains empty buttons, shapes, tables, or placeholders, **include them** in the code.
+- **Repeat elements fully** (e.g., if there are 15 rows or cards, write all 15 in the HTML).  
+  **Do not use comments like** `<!-- Repeat for each item -->` or `<!-- Add more here -->`.
+- For any images:
+  - Use placeholder images from **https://placehold.co**
+  - Include **descriptive alt text** to allow future AI-based image generation.
+- You may use:
+  - **Google Fonts** for typography
+  - **Font Awesome** for icons:  
+    `<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">`
+- **Do not include any explanatory text or markdown formatting.**  
+  Return only the full code inside `<html>...</html>` tags.
 """
 
 BOOTSTRAP_SYSTEM_PROMPT = """

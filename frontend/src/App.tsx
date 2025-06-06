@@ -67,7 +67,7 @@ function App() {
       screenshotOneApiKey: null,
       isImageGenerationEnabled: false,
       editorTheme: EditorTheme.COBALT,
-      generatedCodeConfig: Stack.HTML_TAILWIND,
+      generatedCodeConfig: Stack.HTML_CSS,
       codeGenerationModel: CodeGenerationModel.CLAUDE_3_5_SONNET_2024_06_20,
       // Only relevant for hosted version
       isTermOfServiceAccepted: false,
@@ -102,7 +102,7 @@ function App() {
     if (!settings.generatedCodeConfig) {
       setSettings((prev) => ({
         ...prev,
-        generatedCodeConfig: Stack.HTML_TAILWIND,
+        generatedCodeConfig: Stack.HTML_CSS,
       }));
     }
   }, [settings.generatedCodeConfig, setSettings]);

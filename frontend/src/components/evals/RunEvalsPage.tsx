@@ -15,7 +15,7 @@ function RunEvalsPage() {
   const [models, setModels] = useState<string[]>([]);
   const [stacks, setStacks] = useState<string[]>([]);
   const [selectedModels, setSelectedModels] = useState<string[]>([]);
-  const [selectedStack, setSelectedStack] = useState<string>("html_tailwind");
+  const [selectedStack, setSelectedStack] = useState<string>("html_css");
   const [selectedFiles, setSelectedFiles] = useState<string[]>([]);
   const [showPaths, setShowPaths] = useState<boolean>(false);
 
