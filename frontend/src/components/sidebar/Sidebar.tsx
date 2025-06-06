@@ -12,6 +12,34 @@ import { useEffect, useRef, useState } from "react";
 import HistoryDisplay from "../history/HistoryDisplay";
 import Variants from "../variants/Variants";
 
+
+function Image({ src }: { src: string }) {
+  const imgRef = useRef<HTMLImageElement>(null);
+
+  const handleClick = () => {
+    if (imgRef.current?.requestFullscreen) {
+      imgRef.current.requestFullscreen();
+    } else if ((imgRef.current as any)?.webkitRequestFullscreen) {
+      (imgRef.current as any).webkitRequestFullscreen(); // Safari
+    } else if ((imgRef.current as any)?.mozRequestFullScreen) {
+      (imgRef.current as any).mozRequestFullScreen(); // Firefox
+    } else if ((imgRef.current as any)?.msRequestFullscreen) {
+      (imgRef.current as any).msRequestFullscreen(); // IE
+    }
+  };
+
+  return (
+    <img
+      ref={imgRef}
+      onClick={handleClick}
+      src={src}
+      alt="Reference"
+      className="w-full cursor-pointer border border-gray-200 rounded-md"
+      title="Click to view full screen"
+    />
+  );
+}
+
 interface SidebarProps {
   showSelectAndEditFeature: boolean;
   doUpdate: (instruction: string) => void;
@@ -76,7 +104,39 @@ function Sidebar({
     <>
       <Variants />
 
+      {/* Reference image display */}
+      <div className="flex gap-x-2 mt-2">
+        {referenceImages.length > 0 && (
+          <div className="flex flex-col">
+            <div
+              className={classNames("w-full", {
+                "scanning relative": appState === AppState.CODING,
+              })}
+            >
+              {inputMode === "image" && <Image src={referenceImages[0]} />}
+              {inputMode === "video" && (
+                <video
+                  muted
+                  autoPlay
+                  loop
+                  className="w-full border border-gray-200 rounded-md"
+                  src={referenceImages[0]}
+                />
+              )}
+
+            </div>
+            {/* <div className="text-gray-400 uppercase text-sm text-center mt-1">
+              {inputMode === "video" ? "Original Video" : "Original Screenshot"}
+            </div> */}
+          </div>
+        )}
+      </div>
+
       {/* Show code preview when coding and the selected variant is not complete */}
+        <div className="flex flex-col">
+          <CodePreview code={viewedCode} />
+        </div>
+
       {appState === AppState.CODING && !isSelectedVariantComplete && (
         <div className="flex flex-col">
           {/* Speed disclaimer for video mode */}
@@ -89,8 +149,6 @@ function Sidebar({
               passes to get the best result. Please be patient.
             </div>
           )}
-
-          <CodePreview code={viewedCode} />
 
           <div className="flex w-full">
             <Button
@@ -169,39 +227,6 @@ function Sidebar({
           </div> */}
           </div>
         )}
-
-      {/* Reference image display */}
-      <div className="flex gap-x-2 mt-2">
-        {referenceImages.length > 0 && (
-          <div className="flex flex-col">
-            <div
-              className={classNames({
-                "scanning relative": appState === AppState.CODING,
-              })}
-            >
-              {inputMode === "image" && (
-                <img
-                  className="w-[340px] border border-gray-200 rounded-md"
-                  src={referenceImages[0]}
-                  alt="Reference"
-                />
-              )}
-              {inputMode === "video" && (
-                <video
-                  muted
-                  autoPlay
-                  loop
-                  className="w-[340px] border border-gray-200 rounded-md"
-                  src={referenceImages[0]}
-                />
-              )}
-            </div>
-            <div className="text-gray-400 uppercase text-sm text-center mt-1">
-              {inputMode === "video" ? "Original Video" : "Original Screenshot"}
-            </div>
-          </div>
-        )}
-      </div>
 
       <HistoryDisplay shouldDisableReverts={appState === AppState.CODING} />
     </>

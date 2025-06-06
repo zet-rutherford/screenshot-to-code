@@ -23,17 +23,14 @@ interface Props {
 
 function PreviewPane({ doUpdate, reset, settings }: Props) {
   const { appState } = useAppStore();
-  const { inputMode, head, commits } = useProjectStore();
+  const { head, commits } = useProjectStore();
 
   const currentCommit = head && commits[head] ? commits[head] : "";
   const currentCode = currentCommit
     ? currentCommit.variants[currentCommit.selectedVariantIndex].code
     : "";
 
-  const previewCode =
-    inputMode === "video" && appState === AppState.CODING
-      ? extractHtml(currentCode)
-      : currentCode;
+  const previewCode = extractHtml(currentCode)
 
   return (
     <div className="ml-4">

@@ -5,6 +5,7 @@ import traceback
 from typing import Callable, Awaitable
 from fastapi import APIRouter, WebSocket
 import openai
+from loguru import logger
 from codegen.utils import extract_html_content
 from config import (
     ANTHROPIC_API_KEY,
@@ -127,7 +128,6 @@ class Pipeline:
         chain = start
         for middleware in reversed(self.middlewares):
             chain = self._wrap_middleware(middleware, chain)
-
         await chain(context)
 
     def _wrap_middleware(
@@ -342,31 +342,48 @@ class ModelSelectionStage:
 
         # Gemini only works for create right now
         if generation_type == "create":
-            gemini_model = Llm.GEMINI_2_0_FLASH
+            gemini_model = Llm.GEMINI_2_5_FLASH_PREVIEW_05_20
         else:
-            gemini_model = Llm.CLAUDE_3_7_SONNET_2025_02_19
+            gemini_model = Llm.GEMINI_2_5_FLASH_PREVIEW_05_20
+
+        # Gemini only works for create right now
+        if generation_type == "create":
+            openai_model = Llm.GPT_4_1_2025_04_14
+        else:
+            openai_model = Llm.GPT_4_1_2025_04_14
 
         # Define models based on available API keys
         if openai_api_key and anthropic_api_key and gemini_api_key:
             models = [
-                Llm.GPT_4_1_2025_04_14,
+                openai_model,
                 claude_model,
                 gemini_model,
             ]
         elif openai_api_key and anthropic_api_key:
-            models = [claude_model, Llm.GPT_4_1_2025_04_14]
+            models = [claude_model, openai_model]
+        elif openai_api_key and gemini_api_key:
+            models = [gemini_model, openai_model]
         elif anthropic_api_key:
-            models = [claude_model, Llm.CLAUDE_3_5_SONNET_2024_06_20]
+            models = [claude_model, claude_model]
         elif openai_api_key:
-            models = [Llm.GPT_4_1_2025_04_14, Llm.GPT_4O_2024_11_20]
+            models = [Llm.GPT_4_1_2025_04_14, Llm.GPT_4O_2024_11_20, Llm.O4_MINI_2025_04_16]
+        elif gemini_api_key:
+            # Gemini-only fallback
+            if generation_type == "create":
+                models = [Llm.GEMINI_2_5_FLASH_PREVIEW_05_20, Llm.GEMINI_2_0_FLASH_EXP, Llm.GEMINI_2_5_PRO_PREVIEW_05_06, Llm.GEMINI_2_0_PRO_EXP]
+            else:
+                # You may want to adjust this if Gemini supports update in the future
+                models = [Llm.GEMINI_2_5_FLASH_PREVIEW_05_20, Llm.GEMINI_2_0_FLASH_EXP, Llm.GEMINI_2_5_PRO_PREVIEW_05_06, Llm.GEMINI_2_0_PRO_EXP]
         else:
-            raise Exception("No OpenAI or Anthropic key")
+            raise Exception("No OpenAI, Anthropic, or Gemini key")
 
         # Cycle through models: [A, B] with num=5 becomes [A, B, A, B, A]
         selected_models: List[Llm] = []
         for i in range(num_variants):
             selected_models.append(models[i % len(models)])
-
+        
+        logger.info(f"Selected models: {[model.value for model in selected_models]}")
+        
         return selected_models
 
 
@@ -554,7 +571,7 @@ class ParallelGenerationStage:
     ) -> List[Coroutine[Any, Any, Completion]]:
         """Create generation tasks for each variant model"""
         tasks: List[Coroutine[Any, Any, Completion]] = []
-
+        
         for index, model in enumerate(variant_models):
             if (
                 model == Llm.GPT_4O_2024_11_20

@@ -353,39 +353,35 @@ function App() {
           onOpenChange={handleTermDialogOpenChange}
         />
       )}
-      <div className="lg:fixed lg:inset-y-0 lg:z-40 lg:flex lg:w-96 lg:flex-col">
-        <div className="flex grow flex-col gap-y-2 overflow-y-auto border-r border-gray-200 bg-white px-6 dark:bg-zinc-950 dark:text-white">
-          {/* Header with access to settings */}
-          <div className="flex items-center justify-between mt-10 mb-2">
-            <h1 className="text-2xl ">Screenshot to Code</h1>
-            <SettingsDialog settings={settings} setSettings={setSettings} />
-          </div>
-
-          {/* Generation settings like stack and model */}
-          <GenerationSettings settings={settings} setSettings={setSettings} />
-
-          {/* Show auto updated message when older models are choosen */}
-          {showBetterModelMessage && <DeprecationMessage />}
-
-          {/* Show tip link until coding is complete */}
-          {/* {appState !== AppState.CODE_READY && <TipLink />} */}
-
-          {IS_RUNNING_ON_CLOUD && !settings.openAiApiKey && <OnboardingNote />}
-
-          {/* Rest of the sidebar when we're not in the initial state */}
-          {(appState === AppState.CODING ||
-            appState === AppState.CODE_READY) && (
-            <Sidebar
-              showSelectAndEditFeature={showSelectAndEditFeature}
-              doUpdate={doUpdate}
-              regenerate={regenerate}
-              cancelCodeGeneration={cancelCodeGeneration}
-            />
-          )}
+      <div className="lg:fixed lg:inset-y-0 lg:z-40 lg:flex lg:w-[32rem] lg:flex-col">
+      <div className="flex grow flex-col gap-y-2 overflow-y-auto border-r border-gray-200 bg-white px-6 dark:bg-zinc-950 dark:text-white">
+        {/* Header with access to settings */}
+        <div className="flex items-center justify-between mt-10 mb-2">
+          <h1 className="text-2xl font-bold">Auto Design</h1>
+          <SettingsDialog settings={settings} setSettings={setSettings} />
         </div>
-      </div>
 
-      <main className="py-2 lg:pl-96">
+        {/* Generation settings like stack and model */}
+        <GenerationSettings settings={settings} setSettings={setSettings} />
+
+        {/* Show auto updated message when older models are chosen */}
+        {showBetterModelMessage && <DeprecationMessage />}
+
+        {/* Onboarding */}
+        {IS_RUNNING_ON_CLOUD && !settings.openAiApiKey && <OnboardingNote />}
+
+        {(appState === AppState.CODING || appState === AppState.CODE_READY) && (
+          <Sidebar
+            showSelectAndEditFeature={showSelectAndEditFeature}
+            doUpdate={doUpdate}
+            regenerate={regenerate}
+            cancelCodeGeneration={cancelCodeGeneration}
+          />
+        )}
+      </div>
+    </div>
+
+      <main className="py-2 lg:pl-[32rem] w-full">
         {appState === AppState.INITIAL && (
           <StartPane
             doCreate={doCreate}
@@ -398,6 +394,7 @@ function App() {
           <PreviewPane doUpdate={doUpdate} reset={reset} settings={settings} />
         )}
       </main>
+
     </div>
   );
 }

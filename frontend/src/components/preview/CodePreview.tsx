@@ -9,15 +9,15 @@ function CodePreview({ code }: Props) {
 
   useEffect(() => {
     if (scrollRef.current) {
-      scrollRef.current.scrollLeft = scrollRef.current.scrollWidth;
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [code]);
 
   return (
     <div
       ref={scrollRef}
-      className="w-full px-2 bg-black text-green-400 whitespace-nowrap flex 
-      overflow-x-auto font-mono text-[10px] my-4"
+      className="w-full h-64 px-2 bg-black text-green-400 whitespace-pre-wrap 
+      overflow-y-auto font-mono text-[10px] my-4 rounded"
     >
       {code}
     </div>
