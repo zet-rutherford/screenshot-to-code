@@ -296,6 +296,7 @@ class ModelSelectionStage:
     async def select_models(
         self,
         generation_type: Literal["create", "update"],
+        input_mode: InputMode,
         openai_api_key: str | None,
         anthropic_api_key: str | None,
         gemini_api_key: str | None = None,
@@ -304,6 +305,7 @@ class ModelSelectionStage:
         try:
             variant_models = self._get_variant_models(
                 generation_type,
+                input_mode,
                 NUM_VARIANTS,
                 openai_api_key,
                 anthropic_api_key,
@@ -327,6 +329,7 @@ class ModelSelectionStage:
     def _get_variant_models(
         self,
         generation_type: Literal["create", "update"],
+        input_mode: InputMode,
         num_variants: int,
         openai_api_key: str | None,
         anthropic_api_key: str | None,
@@ -335,10 +338,10 @@ class ModelSelectionStage:
         """Simple model cycling that scales with num_variants"""
 
         # Determine primary Claude model based on generation type
-        if generation_type == "create":
-            claude_model = Llm.CLAUDE_3_7_SONNET_2025_02_19
-        else:
-            claude_model = Llm.CLAUDE_3_5_SONNET_2024_06_20
+        # if generation_type == "create":
+        #     claude_model = Llm.CLAUDE_3_7_SONNET_2025_02_19
+        # else:
+        #     claude_model = Llm.CLAUDE_3_5_SONNET_2024_06_20
 
         # Gemini only works for create right now
         if generation_type == "create":
@@ -346,18 +349,27 @@ class ModelSelectionStage:
         else:
             gemini_model = Llm.GEMINI_2_5_FLASH_PREVIEW_05_20
 
-        # Gemini only works for create right now
-        if generation_type == "create":
-            openai_model = Llm.GPT_4_1_2025_04_14
+        # if generation_type == "create":
+        #     openai_model = Llm.GPT_4_1_2025_04_14
+        # else:
+        #     openai_model = Llm.GPT_4_1_2025_04_14
+        # For text input mode, use Claude 4 Sonnet as third option
+        # For other input modes (image/video), use Gemini as third option
+        if input_mode == "text":
+            third_model = Llm.CLAUDE_4_SONNET_2025_05_14
         else:
-            openai_model = Llm.GPT_4_1_2025_04_14
+            # Gemini only works for create right now
+            if generation_type == "create":
+                third_model = Llm.GEMINI_2_0_FLASH
+            else:
+                third_model = Llm.CLAUDE_3_7_SONNET_2025_02_19
 
         # Define models based on available API keys
-        if openai_api_key and anthropic_api_key and gemini_api_key:
+        if openai_api_key and anthropic_api_key and (gemini_api_key or input_mode == "text"):
             models = [
                 openai_model,
                 claude_model,
-                gemini_model,
+                third_model,
             ]
         elif openai_api_key and anthropic_api_key:
             models = [claude_model, openai_model]
@@ -883,6 +895,7 @@ class CodeGenerationMiddleware(Middleware):
                     model_selector = ModelSelectionStage(context.throw_error)
                     context.variant_models = await model_selector.select_models(
                         generation_type=context.extracted_params.generation_type,
+                        input_mode=context.extracted_params.input_mode,
                         openai_api_key=context.extracted_params.openai_api_key,
                         anthropic_api_key=context.extracted_params.anthropic_api_key,
                         gemini_api_key=GEMINI_API_KEY,
