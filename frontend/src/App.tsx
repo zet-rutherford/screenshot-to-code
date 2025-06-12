@@ -13,7 +13,6 @@ import toast from "react-hot-toast";
 import { Stack } from "./lib/stacks";
 import { CodeGenerationModel } from "./lib/models";
 import useBrowserTabIndicator from "./hooks/useBrowserTabIndicator";
-// import TipLink from "./components/messages/TipLink";
 import { useAppStore } from "./store/app-store";
 import { useProjectStore } from "./store/project-store";
 import Sidebar from "./components/sidebar/Sidebar";
@@ -23,6 +22,7 @@ import { GenerationSettings } from "./components/settings/GenerationSettings";
 import StartPane from "./components/start-pane/StartPane";
 import { Commit } from "./components/commits/types";
 import { createCommit } from "./components/commits/utils";
+import GenerateFromText from "./components/generate-from-text/GenerateFromText";
 
 function App() {
   const {
@@ -33,6 +33,8 @@ function App() {
     setIsImportedFromCode,
     referenceImages,
     setReferenceImages,
+    initialPrompt,
+    setInitialPrompt,
 
     head,
     commits,
@@ -69,7 +71,6 @@ function App() {
       editorTheme: EditorTheme.COBALT,
       generatedCodeConfig: Stack.HTML_CSS,
       codeGenerationModel: CodeGenerationModel.CLAUDE_3_5_SONNET_2024_06_20,
-      // Only relevant for hosted version
       isTermOfServiceAccepted: false,
     },
     "setting"
@@ -77,10 +78,9 @@ function App() {
 
   const wsRef = useRef<WebSocket>(null);
 
-  // Code generation model from local storage or the default value
-  const model =
-    settings.codeGenerationModel || CodeGenerationModel.GPT_4_VISION;
-
+  // Computed values
+  const model = settings.codeGenerationModel || CodeGenerationModel.GPT_4_VISION;
+  
   const showBetterModelMessage =
     model !== CodeGenerationModel.GPT_4O_2024_05_13 &&
     model !== CodeGenerationModel.CLAUDE_3_5_SONNET_2024_06_20 &&
@@ -92,12 +92,10 @@ function App() {
     (settings.generatedCodeConfig === Stack.HTML_TAILWIND ||
       settings.generatedCodeConfig === Stack.HTML_CSS);
 
-  // Indicate coding state using the browser tab's favicon and title
+  // Hooks
   useBrowserTabIndicator(appState === AppState.CODING);
 
-  // When the user already has the settings in local storage, newly added keys
-  // do not get added to the settings so if it's falsy, we populate it with the default
-  // value
+  // Effects
   useEffect(() => {
     if (!settings.generatedCodeConfig) {
       setSettings((prev) => ({
@@ -113,11 +111,8 @@ function App() {
     setUpdateInstruction("");
     disableInSelectAndEditMode();
     resetExecutionConsoles();
-
     resetCommits();
     resetHead();
-
-    // Inputs
     setInputMode("image");
     setReferenceImages([]);
     setIsImportedFromCode(false);
@@ -125,61 +120,47 @@ function App() {
 
   const regenerate = () => {
     if (head === null) {
-      toast.error(
-        "No current version set. Please contact support via chat or Github."
-      );
+      toast.error("No current version set. Please contact support via chat or Github.");
       throw new Error("Regenerate called with no head");
     }
 
-    // Retrieve the previous command
     const currentCommit = commits[head];
     if (currentCommit.type !== "ai_create") {
       toast.error("Only the first version can be regenerated.");
       return;
     }
 
-    // Re-run the create
-    doCreate(referenceImages, inputMode);
+    if (inputMode === "image" || inputMode === "video") {
+      doCreate(referenceImages, inputMode);
+    } else {
+      doCreateFromText(initialPrompt);
+    }
   };
 
-  // Used when the user cancels the code generation
   const cancelCodeGeneration = () => {
     wsRef.current?.close?.(USER_CLOSE_WEB_SOCKET_CODE);
   };
 
-  // Used for code generation failure as well
   const cancelCodeGenerationAndReset = (commit: Commit) => {
-    // When the current commit is the first version, reset the entire app state
     if (commit.type === "ai_create") {
       reset();
     } else {
-      // Otherwise, remove current commit from commits
       removeCommit(commit.hash);
-
-      // Revert to parent commit
       const parentCommitHash = commit.parentHash;
       if (parentCommitHash) {
         setHead(parentCommitHash);
       } else {
         throw new Error("Parent commit not found");
       }
-
       setAppState(AppState.CODE_READY);
     }
   };
 
   function doGenerateCode(params: CodeGenerationParams) {
-    // Reset the execution console
     resetExecutionConsoles();
-
-    // Set the app state to coding during generation
     setAppState(AppState.CODING);
 
-    // Merge settings with params
     const updatedParams = { ...params, ...settings };
-
-    // Create variants dynamically - start with 4 to handle most cases
-    // Backend will use however many it needs (typically 3)
     const baseCommitObject = {
       variants: Array(4).fill(null).map(() => ({ code: "" })),
     };
@@ -197,13 +178,10 @@ function App() {
             type: "ai_edit" as const,
             parentHash: head,
             inputs: {
-              prompt: params.history
-                ? params.history[params.history.length - 1]
-                : "",
+              prompt: params.history ? params.history[params.history.length - 1] : "",
             },
           };
 
-    // Create a new commit and set it as the head
     const commit = createCommit(commitInputObject);
     addCommit(commit);
     setHead(commit.hash);
@@ -237,16 +215,11 @@ function App() {
     });
   }
 
-  // Initial version creation
   function doCreate(referenceImages: string[], inputMode: "image" | "video") {
-    // Reset any existing state
     reset();
-
-    // Set the input states
     setReferenceImages(referenceImages);
     setInputMode(inputMode);
 
-    // Kick off the code generation
     if (referenceImages.length > 0) {
       doGenerateCode({
         generationType: "create",
@@ -256,20 +229,25 @@ function App() {
     }
   }
 
-  // Subsequent updates
-  async function doUpdate(
-    updateInstruction: string,
-    selectedElement?: HTMLElement
-  ) {
+  function doCreateFromText(text: string) {
+    reset();
+    setInputMode("text");
+    setInitialPrompt(text);
+    doGenerateCode({
+      generationType: "create",
+      inputMode: "text",
+      image: text,
+    });
+  }
+
+  async function doUpdate(updateInstruction: string, selectedElement?: HTMLElement) {
     if (updateInstruction.trim() === "") {
       toast.error("Please include some instructions for AI on what to update.");
       return;
     }
 
     if (head === null) {
-      toast.error(
-        "No current version set. Contact support or open a Github issue."
-      );
+      toast.error("No current version set. Contact support or open a Github issue.");
       throw new Error("Update called with no head");
     }
 
@@ -277,15 +255,12 @@ function App() {
     try {
       historyTree = extractHistory(head, commits);
     } catch {
-      toast.error(
-        "Version history is invalid. This shouldn't happen. Please contact support or open a Github issue."
-      );
+      toast.error("Version history is invalid. This shouldn't happen. Please contact support or open a Github issue.");
       throw new Error("Invalid version history");
     }
 
     let modifiedUpdateInstruction = updateInstruction;
 
-    // Send in a reference to the selected element if it exists
     if (selectedElement) {
       modifiedUpdateInstruction =
         updateInstruction +
@@ -298,7 +273,7 @@ function App() {
     doGenerateCode({
       generationType: "update",
       inputMode,
-      image: referenceImages[0],
+      image: inputMode === "text" ? initialPrompt : referenceImages[0],
       history: updatedHistory,
       isImportedFromCode,
     });
@@ -313,39 +288,9 @@ function App() {
     }));
   };
 
-  // function setStack(stack: Stack) {
-  //   setSettings((prev) => ({
-  //     ...prev,
-  //     generatedCodeConfig: stack,
-  //   }));
-  // }
-
-  // function importFromCode(code: string, stack: Stack) {
-  //   // Reset any existing state
-  //   reset();
-
-  //   // Set input state
-  //   setIsImportedFromCode(true);
-
-  //   // Set up this project
-  //   setStack(stack);
-
-  //   // Create a new commit and set it as the head
-  //   const commit = createCommit({
-  //     type: "code_create",
-  //     parentHash: null,
-  //     variants: [{ code }],
-  //     inputs: null,
-  //   });
-  //   addCommit(commit);
-  //   setHead(commit.hash);
-
-  //   // Set the app state
-  //   setAppState(AppState.CODE_READY);
-  // }
-
   return (
     <div className="mt-2 dark:bg-black dark:text-white">
+      {/* Global Components */}
       {IS_RUNNING_ON_CLOUD && <PicoBadge />}
       {IS_RUNNING_ON_CLOUD && (
         <TermsOfServiceDialog
@@ -353,48 +298,50 @@ function App() {
           onOpenChange={handleTermDialogOpenChange}
         />
       )}
+
+      {/* Sidebar */}
       <div className="lg:fixed lg:inset-y-0 lg:z-40 lg:flex lg:w-[32rem] lg:flex-col">
-      <div className="flex grow flex-col gap-y-2 overflow-y-auto border-r border-gray-200 bg-white px-6 dark:bg-zinc-950 dark:text-white">
-        {/* Header with access to settings */}
-        <div className="flex items-center justify-between mt-10 mb-2">
-          <h1 className="text-2xl font-bold">Auto Design</h1>
-          <SettingsDialog settings={settings} setSettings={setSettings} />
+        <div className="flex grow flex-col gap-y-4 overflow-y-auto border-r border-gray-200 bg-white px-6 py-4 dark:bg-zinc-950 dark:text-white">
+          
+          {/* Header */}
+          <div className="flex items-center justify-between">
+            <h1 className="text-2xl font-bold">Auto Design</h1>
+            <SettingsDialog settings={settings} setSettings={setSettings} />
+          </div>
+
+          {/* Generation Settings */}
+          <GenerationSettings settings={settings} setSettings={setSettings} />
+
+          {/* Status Messages */}
+          {showBetterModelMessage && <DeprecationMessage />}
+          {IS_RUNNING_ON_CLOUD && !settings.openAiApiKey && <OnboardingNote />}
+
+          {/* Content based on App State */}
+          {appState === AppState.INITIAL && (
+            <GenerateFromText doCreateFromText={doCreateFromText} />
+          )}
+
+          {(appState === AppState.CODING || appState === AppState.CODE_READY) && (
+            <Sidebar
+              showSelectAndEditFeature={showSelectAndEditFeature}
+              doUpdate={doUpdate}
+              regenerate={regenerate}
+              cancelCodeGeneration={cancelCodeGeneration}
+            />
+          )}
         </div>
-
-        {/* Generation settings like stack and model */}
-        <GenerationSettings settings={settings} setSettings={setSettings} />
-
-        {/* Show auto updated message when older models are chosen */}
-        {showBetterModelMessage && <DeprecationMessage />}
-
-        {/* Onboarding */}
-        {IS_RUNNING_ON_CLOUD && !settings.openAiApiKey && <OnboardingNote />}
-
-        {(appState === AppState.CODING || appState === AppState.CODE_READY) && (
-          <Sidebar
-            showSelectAndEditFeature={showSelectAndEditFeature}
-            doUpdate={doUpdate}
-            regenerate={regenerate}
-            cancelCodeGeneration={cancelCodeGeneration}
-          />
-        )}
       </div>
-    </div>
 
+      {/* Main Content */}
       <main className="py-2 lg:pl-[32rem] w-full">
         {appState === AppState.INITIAL && (
-          <StartPane
-            doCreate={doCreate}
-            // importFromCode={importFromCode}
-            // settings={settings}
-          />
+          <StartPane doCreate={doCreate} />
         )}
 
         {(appState === AppState.CODING || appState === AppState.CODE_READY) && (
           <PreviewPane doUpdate={doUpdate} reset={reset} settings={settings} />
         )}
       </main>
-
     </div>
   );
 }
